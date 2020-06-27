@@ -154,4 +154,5 @@ const init = () => {
 		users
 	);
 };
+
 init();
