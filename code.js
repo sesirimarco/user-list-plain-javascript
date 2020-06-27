@@ -43,7 +43,6 @@ const users = [
 	}
 
 ];
-let usersParsed;
 const createTable = (headers, body) => {
 	return `
 		<table class="table">
