@@ -43,9 +43,7 @@ const users = [
 	}
 
 ];
-let usersParsed;
 const createTable = (headers, body) => {
-	//Aca tengo dudas de identacion. Ademas ví que en el ejemplo vos lo hiciste con un array
 	return `
 		<table class="table">
 			<thead class="thead-dark">
@@ -57,37 +55,41 @@ const createTable = (headers, body) => {
 				${body}
 			</tbody>
 		</table>
-		`;
+	`;
 }
 const createHeaders = (headers) => {
 	return headers.map(({text}) => `<th scope="col">${text}</th>`).join('');
 };
 const createBody = (users) => {
 	return users.map((user) => {
-		return `<tr>
-			${Object.values(user).map((value, index) => {
-				//duda de indentacion
-				return `
-					<${index === 0 ? 'th scope="row"' : 'td'}>
-						${value}
-					</td>
-					`;
-			}).join('')}
-		</tr>
-		`
+		return `
+			<tr>
+				${Object.values(user).map((value, index) => {
+					return `
+						<${index === 0 ? 'th scope="row"' : 'td'}>
+							${value}
+						</td>
+						`;
+				}).join('')}
+			</tr>
+		`;
 	}).join('');
 };
 const clearTableBody = (tableBodyContainer) => {
 	tableBodyContainer.innerHTML = '';
 };
 const getTableBodyContainer = () => {
-	return tableContainer.getElementsByTagName('tbody')[0];
+	return getElement('tableContainer').querySelector('tbody');
+};
+const getElement = (id) => {
+	return document.getElementById(id);
 };
 const renderGrid = (users) => {
 	const bodyContainer = getTableBodyContainer();
 	clearTableBody(bodyContainer);
-	if (!users) return
-	bodyContainer.innerHTML = createBody(users);
+	if (users) {
+		bodyContainer.innerHTML = createBody(users);
+	};
 };
 const getParsedUsers = (users) => {
 	return users.map(({givenName, familyName, age}) => {
@@ -109,50 +111,46 @@ const getInitials = (givenName, familyName) => {
 		...familyName.split(' ')
 	].map(name => name.charAt(0)).join('');
 };
-const initFilters = (headers, users) => {
-	initSelect(headers);
+const initFilters = (headers, users, inputSearch, selectColumns) => {
+	initSelect(headers, selectColumns);
 	inputSearch.addEventListener('input', (e) => {
-		onInputSearchChange(e, users);
+		updateGrid(e.currentTarget.value, users);
 	});
 };
-const onInputSearchChange = (e, users) => {
+const updateGrid = (search, users) => {
 	const parsedUsers = getParsedUsers(users);
 	const filterUsers = getFilterUsers(
-		e.currentTarget.value, 
+		search, 
 		parsedUsers, 
 		selectColumns.value
 	);
-
-	if (filterUsers.length) {
-		renderGrid(filterUsers);
-	} else if (e.currentTarget.value.length === 0) {
-		renderGrid(parsedUsers);
-	} else {
-		renderGrid(null);
-	};
+	renderGrid(filterUsers ? filterUsers : parsedUsers);
 };
 const getFilterUsers = (searchString, users, selectedColumn) => {
 	return users.filter( user => 
 		String(user[selectedColumn])
 		.toLowerCase()
 		.search(searchString.toLowerCase()) >= 0 
-		? user 
-		: null 
+			? user 
+			: null 
 	);	
 };
-const initSelect = (headers) => {
-	selectColumns.innerHTML = headers.map(({value, text}) => `<option value="${value}">${text}</option>`).join('');
+const initSelect = (headers, selectColumns) => {
+	selectColumns.innerHTML = headers
+		.map(({value, text}) => `<option value="${value}">${text}</option>`)
+		.join('');
 };
 const init = () => {
-	//esto me explotó la cabeza. tableContainer no necesita del metodo getElementById, con nombrarlo ya existe!!!
-	tableContainer.innerHTML = createTable(
+	getElement('tableContainer').innerHTML = createTable(
 		createHeaders(headers),
 		createBody(getParsedUsers(users))
 	);
 	initFilters(
 		headers,
-		users
+		users,
+		getElement('inputSearch'),
+		getElement('selectColumns'),
+
 	);
 };
-
 init();
