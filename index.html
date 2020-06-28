@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de usuarios II</title>
+    <title>User list</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head>
 <body>
     <div class="container">
-        <p class="display-4 text-center py-5">Lista de usuarios II</p>
+        <p class="display-4 text-center py-5">User list</p>
         <div class="row justify-content-end">
-            <div class="input-group col-sm-12 col-md-6 col-lg-4">
-                <select id="selectColumns" class="form-control"></select>
-                <input type="text" id="inputSearch" placeholder="Buscar..."  class="form-control"/>        
-            </div>
+            <div id="filters" class="input-group col-sm-12 col-md-6 col-lg-4"></div>
         </div>
         <br />
         <div class="row">
             <div class="col-12">
-                <div id="tableContainer"></div>    
+                <div id="userTable"></div>    
             </div>
         </div>
     </div>    
