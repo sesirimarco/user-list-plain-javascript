@@ -1,156 +1,245 @@
-const headers = [
-	{
-		text: 'Given name', 
-		value: 'givenName',
-	},
-	{
-		text: 'Family name', 
-		value: 'familyName',
-	},
-	{
-		text: 'Age', 
-		value: 'age',
-	},
-	{
-		text: 'Initials', 
-		value: 'initials',
-	},
-	{
-		text: 'Legal age', 
-		value: 'legalAge',
-	},
-];
-const users = [
-	{
-		givenName: 'Pedro',
-		familyName: 'Perez Gonzalez',
-		age: 72
-	},
-	{
-		givenName: 'Santa María',
-		familyName: 'Sanchez',
-		age: 15
-	},
-	{
-		givenName: 'Carlos',
-		familyName: 'Bertincci Prosperi',
-		age: 36
-	},
-	{
-		givenName: 'Sebastian',
-		familyName: 'Sirimarco',
-		age: 36
-	}
+import { 
+	users, 
+	usersHeaders, 
+	vegetables, 
+	vegetablesHeaders 
+} from './mock.js';
 
-];
-const createTable = (headers, body) => {
-	return `
-		<table class="table">
-			<thead class="thead-dark">
-				<tr>
-					${headers}
-				</tr>
-			</thead>
-			<tbody>
-				${body}
-			</tbody>
-		</table>
-	`;
-}
-const createHeaders = (headers) => {
-	return headers.map(({text}) => `<th scope="col">${text}</th>`).join('');
-};
-const createBody = (users) => {
-	return users.map((user) => {
-		return `
-			<tr>
-				${Object.values(user).map((value, index) => {
-					return `
-						<${index === 0 ? 'th scope="row"' : 'td'}>
-							${value}
-						</td>
-						`;
-				}).join('')}
-			</tr>
-		`;
-	}).join('');
-};
-const clearTableBody = (tableBodyContainer) => {
-	tableBodyContainer.innerHTML = '';
-};
-const getTableBodyContainer = () => {
-	return getElement('tableContainer').querySelector('tbody');
-};
+//it's simulating an external module.
 const getElement = (id) => {
 	return document.getElementById(id);
 };
-const renderGrid = (users) => {
-	const bodyContainer = getTableBodyContainer();
-	clearTableBody(bodyContainer);
-	if (users) {
-		bodyContainer.innerHTML = createBody(users);
+class Table {
+	constructor(items, headers, container, id) {
+		this.items = items;
+		this.headers = headers;
+		this.container = container;
+		this.id = id;
+
+		this.render();
+	};
+	render() {
+		getElement(this.container)
+			.insertAdjacentHTML('afterend', 
+			`
+				<div class="row">
+            		<div class="col-12">
+						<div id="table${this.id}">
+						${
+							this.createTable(
+									this.createHeaders(this.headers),
+									this.createBody(
+										this.items
+									)
+							)
+						}
+						</div>    
+					</div>
+				</div>
+			`
+		);
+	};
+	getTableBodyContainer() {
+		return getElement(`table${this.id}`).querySelector('tbody');
+	};
+	update(items) {
+		const bodyContainer = this.getTableBodyContainer();
+		this.clearTableBody(bodyContainer);
+		if (items) {
+			bodyContainer.innerHTML = this.createBody(items);
+		};
+	};
+	createTable(headers, body) {
+		return `
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						${headers}
+					</tr>
+				</thead>
+				<tbody>
+					${body}
+				</tbody>
+			</table>
+		`;
+	}
+	createHeaders(headers) {
+		return headers.map(({text}) => `<th scope="col">${text}</th>`).join('');
+	};
+	createBody(items) {
+		return items.map((item) => {
+			return `
+				<tr>
+					${Object.values(item).map((value, index) => {
+						return `
+							<${index === 0 ? 'th scope="row"' : 'td'}>
+								${value}
+							</td>
+							`;
+					}).join('')}
+				</tr>
+			`;
+		}).join('');
+	};
+	clearTableBody(tableBodyContainer) {
+		tableBodyContainer.innerHTML = '';
 	};
 };
-const getParsedUsers = (users) => {
-	return users.map(({givenName, familyName, age}) => {
-		return {
-			givenName:  givenName,
-			familyName: familyName,
-			age: age,
-			initials: getInitials(givenName, familyName),
-			legalAge: getLegalAge(age),
-		};
-	});
+class Filters {
+	constructor(filteredTable, items, headers, container, id) {
+		this.filteredTable = filteredTable;
+		this.items = items
+		this.headers = headers;
+		this.id = id;
+		this.render(getElement(container));
+	};
+	updateValueFilter(search, items) {
+		const parsedItems = items;
+		const filterItems = this.getFilterItems(
+			search, 
+			parsedItems, 
+			this.selectColumns.value
+		);
+		this.filteredTable.handlerChangeFilter(
+				filterItems 
+					? filterItems 
+					: parsedItems
+			);
+	};
+	getFilterItems(searchString, items, selectedColumn) {
+		return items.filter( item => 
+			String(item[selectedColumn])
+			.toLowerCase()
+			.search(searchString.toLowerCase()) >= 0 
+				? item 
+				: null 
+		);	
+	};
+	initSelect(selectColumns, headers) {
+		selectColumns.innerHTML = headers
+			.map(({value, text}) => `<option value="${value}">${text}</option>`)
+			.join('');
+	};
+	render(container) {
+		container.insertAdjacentHTML(
+				'afterBegin', 
+				`
+					<div class="row justify-content-end">
+						<div 
+							id="filters${this.id}" 
+							class="input-group col-sm-12 col-md-6 col-lg-4"
+						>
+						<select 
+							id="selectColumns${this.id}" 
+							class="form-control">
+						</select>
+						<input 
+							type="text" 
+							id="inputSearch${this.id}" 
+							placeholder="Search..."  
+							class="form-control"
+						/>  
+						</div>
+					</div>
+					<br />
+				`
+		);
+
+		this.selectColumns = getElement(`selectColumns${this.id}`);
+		this.initSelect(this.selectColumns , this.headers);
+		getElement(`inputSearch${this.id}`)
+			.addEventListener('input', (e) => {
+				this.updateValueFilter(e.currentTarget.value, this.items);
+			});
+	};
 };
-const getLegalAge = (age) => {
-	return parseInt(age) >= 18 ? 'yes' : 'no';
+class FilteredTable {
+	constructor(container, id, items, headers) {
+		this.table = new Table(
+			items, 
+			headers, 
+			container,
+			id
+		);
+		this.filters = new Filters(
+			this,
+			items,
+			headers,
+			container,
+			id
+		)
+	};
+	handlerChangeFilter(items) {
+		this.table.update(items);
+	};
 };
-const getInitials = (givenName, familyName) => {
-	return [
-		...givenName.split(' '), 
-		...familyName.split(' ')
-	].map(name => name.charAt(0)).join('');
+class UsersFilteredTable {
+	constructor(container, id, users, headers) {
+		new FilteredTable(
+			container,
+			id,
+			this.getParsedUsers(users),
+			headers
+		);
+	};
+	getParsedUsers(users) {
+		return users.map(({givenName, familyName, age}) => {
+			return {
+				givenName:  givenName,
+				familyName: familyName,
+				age: age,
+				initials: this.getInitials(givenName, familyName),
+				legalAge: this.getLegalAge(age),
+			};
+		});
+	};
+	getLegalAge(age) {
+		return parseInt(age) >= 18 ? 'yes' : 'no';
+	};
+	getInitials(givenName, familyName) {
+		return [
+			...givenName.split(' '), 
+			...familyName.split(' ')
+		].map(name => name.charAt(0)).join('');
+	};
 };
-const initFilters = (headers, users, inputSearch, selectColumns) => {
-	initSelect(headers, selectColumns);
-	inputSearch.addEventListener('input', (e) => {
-		updateGrid(e.currentTarget.value, users);
-	});
-};
-const updateGrid = (search, users) => {
-	const parsedUsers = getParsedUsers(users);
-	const filterUsers = getFilterUsers(
-		search, 
-		parsedUsers, 
-		selectColumns.value
-	);
-	renderGrid(filterUsers ? filterUsers : parsedUsers);
-};
-const getFilterUsers = (searchString, users, selectedColumn) => {
-	return users.filter( user => 
-		String(user[selectedColumn])
-		.toLowerCase()
-		.search(searchString.toLowerCase()) >= 0 
-			? user 
-			: null 
-	);	
-};
-const initSelect = (headers, selectColumns) => {
-	selectColumns.innerHTML = headers
-		.map(({value, text}) => `<option value="${value}">${text}</option>`)
-		.join('');
+class VegetablesFilteredTable {
+	constructor(container, id, vegetables, headers) {
+		new FilteredTable(
+			container,
+			id,
+			this.getParsedVegetables(vegetables),
+			headers
+		);
+	};
+	getParsedVegetables(vegetables) {
+		return vegetables.map(({name, origin, cost, kilos}) => {
+			return {
+				name,
+				origin,
+				cost,
+				kilos,
+				totalCost: `$ ${this.getTotalCost(kilos, cost)}`
+
+			};
+		});
+	};
+	getTotalCost(kilos, cost) {
+		return kilos * cost;
+	};
 };
 const init = () => {
-	getElement('tableContainer').innerHTML = createTable(
-		createHeaders(headers),
-		createBody(getParsedUsers(users))
-	);
-	initFilters(
-		headers,
+	new UsersFilteredTable(
+		'filteredTableUsers', 
+		'Users',
 		users,
-		getElement('inputSearch'),
-		getElement('selectColumns'),
-
+		usersHeaders
+	);
+	new VegetablesFilteredTable(
+		'filteredTableVegetables', 
+		'Vegetables',
+		vegetables,
+		vegetablesHeaders
 	);
 };
 init();
